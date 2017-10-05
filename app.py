@@ -2,6 +2,7 @@ from flask import Flask
 import speech_recognition as sr
 from ffmpy import FFmpeg
 from os import path
+import os
 import uuid
 from flask import request
 
@@ -10,12 +11,12 @@ app = Flask(__name__)
 
 @app.route("/")
 def hello():
-    return "Hello World!"
+    return "Try GET /transcribe?videoUrl=path_to_video"
 
 
 @app.route("/health-check")
 def health():
-    return "Hi"
+    return "Strong like Mom"
 
 
 @app.route("/transcribe")
@@ -32,7 +33,7 @@ def transcribe():
 
     try:
         ff = FFmpeg(
-            inputs={(requested_video_path): None},
+            inputs={requested_video_path: None},
             outputs={audio_path: ['-c:a', 'flac']}
         )
 
@@ -40,7 +41,7 @@ def transcribe():
 
         ff.run()
 
-        print('Made FLAC: ' + audio_path)
+        print('Made audio file: ' + audio_path)
 
     except Exception as e:
         print("FFmpeg error {0}".format(e))
@@ -54,8 +55,11 @@ def transcribe():
     transcription = '[Could not transcribe]'
 
     try:
-        transcription = r.recognize_sphinx(audio)
-        print("Sphinx thinks you said " + transcription)
+        # transcription = r.recognize_sphinx(audio)
+        # print("Sphinx thinks you said " + transcription)
+
+        transcription = r.recognize_google(audio)
+        print("Google Speech Recognition thinks you said " + transcription)
     except sr.UnknownValueError:
         print("Sphinx could not understand audio")
     except sr.RequestError as e:
