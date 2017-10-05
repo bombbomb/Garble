@@ -3,6 +3,7 @@ import speech_recognition as sr
 from ffmpy import FFmpeg
 from os import path
 import uuid
+from flask import request
 
 app = Flask(__name__)
 
@@ -12,37 +13,57 @@ def hello():
     return "Hello World!"
 
 
+@app.route("/health-check")
+def health():
+    return "Hi"
+
+
 @app.route("/transcribe")
 def transcribe():
 
     audio_path = path.join(path.dirname(path.realpath(__file__)), str(uuid.uuid4()) + '.flac')
 
-    video_input_path = path.join(path.dirname(path.realpath(__file__)), 'example.mp4')
+    requested_video_path = request.args.get('videoUrl')
 
-    ff = FFmpeg(
-        inputs={video_input_path: None},
-        outputs={audio_path: ['-c:a', 'flac']}
-    )
+    if requested_video_path is None:
+        return "You must provide a 'videoUrl' parameter"
 
-    print(ff.cmd)
+    print("Requested video path: " + requested_video_path)
 
-    ff.run()
+    try:
+        ff = FFmpeg(
+            inputs={(requested_video_path): None},
+            outputs={audio_path: ['-c:a', 'flac']}
+        )
 
-    print('Made FLAC: ' + audio_path)
+        print(ff.cmd)
+
+        ff.run()
+
+        print('Made FLAC: ' + audio_path)
+
+    except Exception as e:
+        print("FFmpeg error {0}".format(e))
+        return "Error extracting audio "
 
     # use the audio file as the audio source
     r = sr.Recognizer()
     with sr.AudioFile(audio_path) as source:
         audio = r.record(source)
 
+    transcription = '[Could not transcribe]'
+
     try:
-        print("Sphinx thinks you said " + r.recognize_sphinx(audio))
+        transcription = r.recognize_sphinx(audio)
+        print("Sphinx thinks you said " + transcription)
     except sr.UnknownValueError:
         print("Sphinx could not understand audio")
     except sr.RequestError as e:
         print("Sphinx error; {0}".format(e))
 
-    return "Hello World!"
+    os.remove(audio_path)
+
+    return transcription
 
 
 if __name__ == '__main__':
