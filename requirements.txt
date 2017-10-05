@@ -1,0 +1,5 @@
+ffmpy
+Flask
+SpeechRecognition
+pyaudio
+pocketsphinx
