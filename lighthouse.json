@@ -2,7 +2,10 @@
     "service": {
         "default": {
             "build": ".",
-            "ports": ["http://5000"]
+            "ports": ["http://5000"],
+              "environment": [
+                { "name": "GKEY", "value": "${GKEY}" }
+              ]
         }
     }
 }
